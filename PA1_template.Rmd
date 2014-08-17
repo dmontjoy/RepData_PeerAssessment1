@@ -101,7 +101,7 @@ hist(pasos_anio.imputed$pasos,xlab="Total Steps", main="Total Steps Histogram")
 data.imputed$dia_semana<-weekdays(data.imputed$date_final)
 
 
-data.imputed[,"day_factor"] <- ifelse(data.imputed$dia_semana == "domingo" |data.imputed$dia_semana == "sábado","Weekend", "Weekday")
+data.imputed[,"day_factor"] <- ifelse(data.imputed$dia_semana == "sunday" |data.imputed$dia_semana =="saturday","Weekend", "Weekday")
 
 
 
