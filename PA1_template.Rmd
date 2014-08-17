@@ -1,20 +1,123 @@
-# Reproducible Research: Peer Assessment 1
+---
+title: "PA1_template"
+author: "danielMontjoy"
+date: "Thursday, August 14, 2014"
+output: html_document
+---
+###Loading the data
+```{r load data}
+library(ggplot2)
+library(plyr)
+
+if (!file.exists("activity.zip")) {
+        download.file(url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",
+                      destfile = "activity.zip",
+                      method = "curl")
+        }
+if (!file.exists("activity.csv")) {
+        unzip ("activity.zip")
+        }
 
 
-## Loading and preprocessing the data
+data<-read.csv("activity.csv");
+mean(data$steps[which(data$steps>=0)])
+```
+
+### Cast to date
+
+```{r fecha ,echo=TRUE}
+data$date_final<- as.Date(data$date,"%Y-%m-%d")
+```
+
+
+###Clean Data
+```{r ,echo=TRUE}
+data2<-data[is.na(data$steps)==FALSE,]
+```
+
+### Histogram of the total number of steps taken each day  
+```{r total_steps,echo=TRUE,fig.height=6}
+pasos_anio<-aggregate(data2$steps,by=list(data2$date),sum,na.rm=TRUE)
+names(pasos_anio)<-c("fecha","pasos")
+hist(pasos_anio$pasos,xlab="Total Steps", main="Total Steps Histogram")
+```
+###Mean and Median  
+
+```{r mean_median,echo=TRUE}
+data_mean<-mean(data$steps[is.na(data$steps)==FALSE])
+
+data_median<-median(data$steps[is.na(data$steps)==FALSE])
+
+```
+
+The mean is `r data_mean` and the median is `r data_median`  
+
+###Series plot of the 5-minute interval  
+```{r average_daily,echo=TRUE,fig.height=6}
+pasos_interval<-aggregate(data2$steps,by=list(data2$interval),mean,na.rm=TRUE)
+names(pasos_interval)<-c("intervalos","pasos")
+plot(pasos_interval$pasos ~ pasos_interval$intervalos,type="l",xlab="Interval",ylab="Average Steps", main="Average Daily Activity Pattern")
+```
+
+```{r most,echo=TRUE}
+most <- pasos_interval$intervalos[which.max(pasos_interval$pasos)]
+```
+
+The maximum number of steps in a 5 minute interval was taken on `r most`.
+
+###Calculate and report the total number of missing values in the dataset  
+
+
+```{r MissingValues,echo=TRUE}
+mv<-colSums(is.na(data))
+```
+
+The total number of missing values is `r mv`.  
+
+## The strategy for filling in all of the missing values in the dataset is put the mean  
+
+```{r fill_In_MissingValues,echo=TRUE}
+
+library(Hmisc)
+data.imputed <- data
+data.imputed$steps <- with(data.imputed, impute(steps, mean))
+
+pasos_anio.imputed<-aggregate(data.imputed$steps,by=list(data.imputed$date),sum,na.rm=TRUE)
+names(pasos_anio.imputed)<-c("fecha","pasos")
+data_mean_imputed<-mean(pasos_anio.imputed$pasos)
+data_median_imputed<-median(pasos_anio.imputed$pasos)
+
+
+````
+The mean and median total number of steps taken per day are `r data_mean_imputed` and `r data_median_imputed` respectively.**Imputing the missing data has increased the average number of steps.**
+###Make a histogram of the total number of steps taken each day
+```{r Hist2,echo=TRUE,fig.height=6}
+hist(pasos_anio.imputed$pasos,xlab="Total Steps", main="Total Steps Histogram")
+```
+
+###Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+```{r weekdays_weekends,echo=TRUE}
+data.imputed$dia_semana<-weekdays(data.imputed$date_final)
+
+
+data.imputed[,"day_factor"] <- ifelse(data.imputed$dia_semana == "domingo" |data.imputed$dia_semana == "sábado","Weekend", "Weekday")
 
 
 
-## What is mean total number of steps taken per day?
+
+```
+
+###Make a panel plot containing a time series
+
+```{r dayType, echo=TRUE, fig.height=6}
+final <- aggregate(data.imputed$steps,
+                   by=list(data.imputed$interval,
+                           data.imputed$day_factor),
+                   FUN=mean)
+names(final) <- c("interval", "dayType", "steps")
+xyplot(steps ~ interval | dayType, data = final, type = "l", layout=c(1,2))
+```
 
 
 
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
